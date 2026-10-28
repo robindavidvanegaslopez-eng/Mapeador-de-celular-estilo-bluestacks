@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mapeador de Toques</string>
+    <string name="service_desc">Permite crear botones en pantalla (toques, joystick, deslizar, turbo y macros) que simulan toques de dedos en tus juegos, y asignarles teclas de un teclado externo.</string>
+</resources>
