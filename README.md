@@ -1,0 +1,1 @@
+# Mapeador-de-celular-estilo-bluestacks
