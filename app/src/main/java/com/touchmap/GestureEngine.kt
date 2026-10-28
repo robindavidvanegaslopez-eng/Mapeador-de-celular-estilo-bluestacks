@@ -31,6 +31,7 @@ class GestureEngine(private val svc: AccessibilityService) {
         var sentEnd = false
         var tapMs = 0L
         var swipe: Swipe? = null
+        var jump = false
     }
 
     private val pts = LinkedHashMap<Int, P>()
@@ -41,6 +42,7 @@ class GestureEngine(private val svc: AccessibilityService) {
 
     companion object {
         const val SEG = 55L
+        const val JUMP = 8L
     }
 
     fun down(x: Float, y: Float): Int {
@@ -50,9 +52,11 @@ class GestureEngine(private val svc: AccessibilityService) {
         return id
     }
 
-    fun move(id: Int, x: Float, y: Float) {
+    /** jump = true: el dedo salta al punto nuevo en pocos ms (sin arrastre visible). */
+    fun move(id: Int, x: Float, y: Float, jump: Boolean = false) {
         val p = pts[id] ?: return
         if (p.ending) return
+        if (x != p.tx || y != p.ty) p.jump = jump
         p.tx = x
         p.ty = y
         pump()
@@ -114,7 +118,10 @@ class GestureEngine(private val svc: AccessibilityService) {
             path.moveTo(p.lx, p.ly)
             if (p.tx != p.lx || p.ty != p.ly) path.lineTo(p.tx, p.ty)
             val first = p.stroke == null
-            val dur = if (first && p.ending && p.tapMs > 0L) p.tapMs else SEG
+            val moving = p.tx != p.lx || p.ty != p.ly
+            val dur = if (first && p.ending && p.tapMs > 0L) p.tapMs
+            else if (p.jump && moving && !first) JUMP else SEG
+            p.jump = false
             val cont = !p.ending
             try {
                 val prev = p.stroke

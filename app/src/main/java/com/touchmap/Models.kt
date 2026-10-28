@@ -67,6 +67,7 @@ class Control(val id: String) {
     var swipeMs = 250
     var speed = 1.0f
     var analogPad = true
+    var fixedPress = true // joystick: toque quieto en el punto de la dirección (no arrastre desde el centro)
     var loopMode = 0 // 0 una vez, 1 repetir mientras se mantiene, 2 alternar
     var opacity = 0.85f
     var hidden = false // solo teclado, sin botón en pantalla
@@ -188,6 +189,7 @@ object Store {
             j.put("swipeMs", c.swipeMs)
             j.put("speed", c.speed.toDouble())
             j.put("analogPad", c.analogPad)
+            j.put("fixedPress", c.fixedPress)
             j.put("loopMode", c.loopMode)
             j.put("opacity", c.opacity.toDouble())
             j.put("hidden", c.hidden)
@@ -224,6 +226,7 @@ object Store {
             c.swipeMs = j.optInt("swipeMs", 250)
             c.speed = j.optDouble("speed", 1.0).toFloat()
             c.analogPad = j.optBoolean("analogPad", true)
+            c.fixedPress = j.optBoolean("fixedPress", true)
             c.loopMode = j.optInt("loopMode", 0)
             c.opacity = j.optDouble("opacity", 0.85).toFloat()
             c.hidden = j.optBoolean("hidden", false)
@@ -262,6 +265,7 @@ fun Control.deepCopy(newId: String): Control {
     c.swipeMs = swipeMs
     c.speed = speed
     c.analogPad = analogPad
+    c.fixedPress = fixedPress
     c.loopMode = loopMode
     c.opacity = opacity
     c.hidden = hidden

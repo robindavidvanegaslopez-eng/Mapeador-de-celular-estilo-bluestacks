@@ -411,7 +411,7 @@ class MapperService : AccessibilityService() {
     }
 
     /** Dirección del joystick: (ux, uy) unitario y mag de 0 a 1. */
-    fun joy(c: Control, ux: Float, uy: Float, mag: Float) {
+    fun joy(c: Control, ux: Float, uy: Float, mag: Float, jump: Boolean = false) {
         val a = act.getOrPut(c.id) { Active() }
         if (mag < 0.05f || blocked()) {
             if (a.joyId >= 0) engine.up(a.joyId)
@@ -422,8 +422,15 @@ class MapperService : AccessibilityService() {
         val cx = g.tx * screenW
         val cy = g.ty * screenH
         val r = g.rad * min(screenW, screenH) * c.speed
-        if (a.joyId < 0) a.joyId = engine.down(cx, cy)
-        engine.move(a.joyId, cx + ux * mag * r, cy + uy * mag * r)
+        val px = cx + ux * mag * r
+        val py = cy + uy * mag * r
+        if (c.fixedPress) {
+            // dedo apoyado directamente en el punto de la dirección y mantenido
+            if (a.joyId < 0) a.joyId = engine.down(px, py) else engine.move(a.joyId, px, py, jump)
+        } else {
+            if (a.joyId < 0) a.joyId = engine.down(cx, cy)
+            engine.move(a.joyId, px, py)
+        }
     }
 
     private fun joyKey(c: Control, bit: Int, down: Boolean) {
@@ -436,7 +443,7 @@ class MapperService : AccessibilityService() {
         if ((a.bits and 4) != 0) dx -= 1f
         if ((a.bits and 8) != 0) dx += 1f
         val len = hypot(dx, dy)
-        if (len < 0.01f) joy(c, 0f, 0f, 0f) else joy(c, dx / len, dy / len, 1f)
+        if (len < 0.01f) joy(c, 0f, 0f, 0f) else joy(c, dx / len, dy / len, 1f, true)
     }
 
     // ------------------------------------------------------------------ macros
@@ -784,6 +791,7 @@ class MapperService : AccessibilityService() {
         c.swipeMs = s.swipeMs
         c.speed = s.speed
         c.analogPad = s.analogPad
+        c.fixedPress = s.fixedPress
         c.loopMode = s.loopMode
         c.opacity = s.opacity
         c.hidden = s.hidden
@@ -1056,7 +1064,12 @@ class MapperService : AccessibilityService() {
                 label(body, "Arrastra el punto ➜ para fijar dónde termina el deslizamiento.", true)
             }
             Kind.JOYSTICK -> {
-                slider(body, "Velocidad (desplazamiento)", 30, 100, (c.speed * 100).toInt(), { "$it %" }) {
+                toggle(body, if (c.fixedPress) "Toque quieto en la dirección (recomendado)" else "Modo clásico: arrastre desde el centro", c.fixedPress) {
+                    c.fixedPress = !c.fixedPress
+                    Store.save()
+                    showProps()
+                }
+                slider(body, "Distancia del toque desde el centro (100 % = borde)", 20, 100, (c.speed * 100).toInt(), { "$it %" }) {
                     c.speed = it / 100f
                 }
                 slider(body, "Radio del joystick del juego", 3, 40, (g.rad * 100).toInt(), { "$it %" }) {
